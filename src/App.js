@@ -8,7 +8,7 @@ function App() {
   return (
     <>
       {loggedIn ? (
-        <Calculator />
+        <Calculator onLogout={() => setLoggedIn(false)} />
       ) : (
         <Login onLoginSuccess={() => setLoggedIn(true)} />
       )}
