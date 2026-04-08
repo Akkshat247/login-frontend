@@ -29,6 +29,11 @@ function Login({ onLoginSuccess }) {
   return (
     <div className="container">
       <h1>Calculator App</h1>
+      <img 
+  src="https://akkshat-bucket.s3.ca-central-1.amazonaws.com/loginlogo.jpg"
+  alt="logo"
+  style={{ width: "150px" }}
+/>
       <div className="card">
         <h2>Login</h2>
 
