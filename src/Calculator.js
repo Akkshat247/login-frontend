@@ -1,47 +1,51 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 
 function Calculator() {
-  const [input, setInput] = useState("");
+  const [loaded, setLoaded] = useState(false);
+  const [RemoteCalculator, setRemoteCalculator] = useState(null);
 
-  const handleClick = (value) => {
-    setInput(input + value);
-  };
+  /* 🔹 FETCH ENTIRE CALCULATOR CODE FROM S3 */
+  useEffect(() => {
+    fetch("https://akkshat-bucket.s3.ca-central-1.amazonaws.com/s3calc.js")
+      .then((res) => res.text())
+      .then((code) => {
+        /* calculator.js in S3 must contain:
+           export default function RemoteCalculator() { ... }
+        */
 
-  const calculate = () => {
-    try {
-      setInput(eval(input).toString());
-    } catch {
-      setInput("Error");
-    }
-  };
+        const cleanedCode = code
+          .replace(/import.*from.*;/g, "")
+          .replace("export default", "");
 
-  const clear = () => {
-    setInput("");
-  };
+        const componentFactory = new Function(
+          "React",
+          `
+          ${cleanedCode}
+          return Calculator;
+        `
+        );
 
-  return (
-    <div className="container">
-      <h1>Calculator App</h1>
+        const LoadedComponent = componentFactory(React);
 
-      <div className="card">
-        <input className="display" value={input} readOnly />
+        setRemoteCalculator(() => LoadedComponent);
+        setLoaded(true);
+      })
+      .catch((err) => {
+        console.error("Failed to load Calculator from S3:", err);
+      });
+  }, []);
 
-        <div className="grid">
-          {["7","8","9","/","4","5","6","*","1","2","3","-","0",".","=","+"].map((btn) => (
-            <button
-              key={btn}
-              onClick={() => btn === "=" ? calculate() : handleClick(btn)}
-            >
-              {btn}
-            </button>
-          ))}
-        </div>
-
-        <button className="clear" onClick={clear}>Clear</button>
+  if (!loaded) {
+    return (
+      <div className="container">
+        <h1>Calculator App</h1>
+        <p>Loading calculator from S3...</p>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return <RemoteCalculator />;
 }
 
 export default Calculator;
